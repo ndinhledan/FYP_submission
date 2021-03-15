@@ -1,0 +1,299 @@
+$rootbackgroundColor: #121212;
+// $surfaceColor: #424242;
+$surfaceColor: #1A1A1B;
+$textColor: #fff;
+$chipColor: #616161;
+
+$primaryColor: #794bd7;
+$primaryDarkColor: #543496;
+$primaryLightColor: #936fdf;
+$secondaryColor: #03dac6;
+$secondaryDarkColor: #02988a;
+$secondaryLightColor: #35e1d1;
+
+body {
+    background-color: $rootbackgroundColor;
+
+}
+
+#root {
+    background-color: $rootbackgroundColor;
+    color: $textColor;
+    position: relative;
+
+    .elevated-4 {
+        box-shadow: 0px 2px 4px -1px rgba(0,0,0,0.2),0px 4px 5px 0px rgba(0,0,0,0.14),0px 1px 10px 0px rgba(0,0,0,0.12);
+    }
+    
+    .ui.segment {
+        background-color: #333;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        border-radius: 0;
+        transition: width 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+
+    }
+
+    .ui.secondary.menu, .ui.tabular.menu {
+        .item {
+            color: $textColor;
+            background: 0 0;
+            
+            &.active {
+                background-color: #585858;
+                opacity: 1;
+            }
+
+            &:hover {
+                background-color: #707070;
+                color: #fff;
+            }
+        }
+
+        .btn-group {
+            display: flex;
+    
+            * {
+                border-top-left-radius: 4px;
+                border-top-right-radius: 4px;
+            }
+        }
+
+        .input {
+            input {
+                background-color: rgba(255,255,255,0.15);
+                color: #fff;
+    
+                &:hover {
+                    background-color: rgba(255,255,255,0.2);
+                }
+    
+                &:focus {
+                    border: 0;
+                }
+            }
+
+            .icon {
+                color: #fff;
+            }
+            
+        }
+    }
+
+    .ui.tabular.menu .item.active {
+        margin-bottom: -1px;
+    }
+
+    .ui.cards {
+        flex-direction: column;
+
+        .MuiCard-root {
+            margin: 10px 0;
+        }
+    }
+
+    .MuiCard-root, .MuiPaper-root {
+        color: $textColor;
+        transition: box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+        background-color: $surfaceColor;
+        border: 1px solid rgba(white, 0.3);
+        overflow: unset;
+
+        .MuiTypography-colorTextSecondary {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .MuiChip-root {
+            color: $textColor;
+            background-color: $chipColor;
+
+
+            &.MuiChip-colorPrimary {
+                background-color: $primaryColor;
+                color: #fff;
+            }
+
+            &.MuiChip-colorSecondary {
+                background-color: $secondaryColor;
+                color: #000;
+            }
+
+            &.MuiChip-outlined {
+                background-color: transparent;
+
+                &.MuiChip-outlinedSecondary {
+                    border-color: $secondaryColor;
+                    color: $secondaryColor;
+                }
+                &.MuiChip-outlinedPrimary {
+                    border-color: $primaryColor;
+                    color: $primaryColor;
+                }
+            }
+        }
+    }
+
+    .MuiIconButton-root, .MuiButton-root {
+        color: $textColor;
+
+        &.Mui-disabled {
+            color: rgba($color: #fff, $alpha: 0.4);
+        }
+
+        &:hover {
+            background-color: rgba($color: #fff, $alpha: 0.08);
+        }
+
+        &.MuiButton-containedPrimary {
+            background-color: $primaryColor;
+
+            &:hover {
+                background-color: $primaryDarkColor;
+            }
+        }
+    }
+
+    
+    
+    input, textarea {
+        background-color: $chipColor;
+        border: 1px solid $chipColor;
+        color: $textColor;
+        &::placeholder {
+            color: rgba($color: #fff, $alpha: 0.5);
+        }
+
+        &::selection {
+            background-color: black;
+            color: $textColor;
+        }
+        &:focus {
+            // box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px $secondaryColor;
+            box-shadow: 0 0 0 0;
+        }
+    }
+    
+}
+
+.MuiPaper-root.MuiMenu-paper {
+    background-color: #424242;
+    color: $textColor;
+
+    .MuiListItem-button:hover {
+        background-color: rgba(255, 255, 255, 0.08);
+    }
+}
+
+// region.wavesurfer-region {
+//     background-color: $primaryLightColor !important;
+// }
+
+
+.MuiSlider-markActive {
+    opacity: 0.8;
+    background-color: #424242 !important;
+}
+
+region.wavesurfer-region {
+    height: 100px !important;
+    top: 30px !important;
+}
+
+input, input.MuiInputBase-input, textarea {
+    // background-color: $chipColor;
+    // border: 1px solid $chipColor;
+    color: $textColor;
+    &::placeholder {
+        color: rgba($color: #fff, $alpha: 0.5);
+    }
+
+    &::selection {
+        background-color: black;
+        color: $textColor;
+    }
+    &:focus {
+        // box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px $secondaryColor;
+        box-shadow: 0 0 0 0;
+    }
+}
+
+.MuiInput-underline::before {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    content: "\00a0";
+    position: absolute;
+    transition: border-bottom-color 200ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.7) !important;
+    pointer-events: none;
+}
+
+.MuiInputBase-root.MuiInput-underline::after {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    content: "";
+    position: absolute;
+    transform: scaleX(0);
+    transition: transform 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+    border-bottom: 2px solid $primaryLightColor;
+    pointer-events: none;
+}
+
+.MuiFormLabel-root.Mui-focused {
+    color: $primaryLightColor !important;
+}
+
+.MuiFormLabel-root {
+    color: rgba(255, 255, 255, 0.7) !important;
+    padding: 0;
+    font-size: 1rem;
+    font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: 0.00938em;
+}
+
+.MuiIconButton-root, .MuiButton-root {
+    color: $textColor !important;
+
+    &.Mui-disabled {
+        color: rgba($color: #fff, $alpha: 0.4);
+    }
+
+    &:hover {
+        background-color: rgba($color: #fff, $alpha: 0.08);
+    }
+
+    &.MuiButton-containedPrimary {
+        background-color: $primaryColor;
+
+        &:hover {
+            background-color: $primaryDarkColor;
+        }
+    }
+}
+
+.MuiSwitch-switchBase.MuiIconButton-root {
+    top: 0;
+    left: 0;
+    color: #bdbdbd !important;
+    z-index: 1;
+    position: absolute;
+    transition: left 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms,transform 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+}
+
+.MuiSwitch-track {
+    width: 100%;
+    height: 100%;
+    opacity: 0.3;
+    z-index: -1;
+    transition: opacity 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms,background-color 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+    border-radius: 7px;
+    background-color: #fff !important;
+}
+
+.MuiSwitch-colorPrimary.Mui-checked + .MuiSwitch-track {
+    background-color: $primaryColor !important;
+}

@@ -1,0 +1,182 @@
+# do not use "latest" here, if you want this to work in the future
+image: docker/compose:alpine-1.27.4
+
+services:
+  - docker:19.03.13-dind
+
+# global cache (apply for all jobs in all stages)
+cache:
+  key: ${CI_COMMIT_REF_SLUG} # only apply for current branch
+  paths:
+  - node_modules/
+
+stages:
+  - install
+  - linting
+  - build
+  # - test
+  - release
+  - deploy
+
+# --- SHARE JOB CONFIGS---
+.linting:
+  stage: linting
+  image: node:12.18-alpine
+
+# This job relates to production code
+.production_job:
+  before_script:
+    - docker version
+    - docker-compose version
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  only:
+    changes:
+      - Dockerfile
+      - src/**/*
+      - public/**/*
+      - package.json
+      - yarn.lock
+      - .gitlab-ci.yml
+# --- END SHARE JOB CONFIGS ---
+
+# install npm dependencies so it'll be cache in subsequent jobs
+# note: we can't do this in linting stage as in that stage, 2 jobs run concurrently and both need node_modules
+install_dependencies:
+  stage: install
+  image: node:12.18-alpine
+  script:
+    - yarn install --frozen-lockfile
+
+# this job make sure commit message is conventional
+lint-commit-msg:
+  extends:
+    - .linting
+  script:
+    - echo "$CI_COMMIT_MESSAGE" | npx commitlint
+
+# this job make sure code is linted
+# TODO: fix all errors first
+# lint-code:
+#   extends:
+#     - .linting
+#   script:
+#     - yarn lint
+
+build:
+  stage: build
+  extends:
+  - .production_job
+  script:
+    # fetches the latest image (not failing if image is not found)
+    - docker pull $CI_REGISTRY_IMAGE:latest || true
+    # notice the cache-from, which is going to use the image we just pulled locally
+    # the built image is tagged locally with the commit SHA, and then pushed to 
+    # the GitLab registry
+    - >
+      docker build
+      --pull
+      --build-arg VCS_REF=$CI_COMMIT_SHA
+      --build-arg VCS_URL=$CI_PROJECT_URL
+      --cache-from $CI_REGISTRY_IMAGE:latest
+      --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+      .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+
+# .tests:
+#   stage: test
+#   before_script: # this before script will overwrite the parent's one
+#     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+#     - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA # pull the image we just push to register
+#     - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:latest # tag this image as latest because in our docker-compose file we specify it with tag latest
+
+# start-up-test:
+#   extends: .tests
+#   script:
+#     - docker-compose up -d
+#     - sleep 15
+#     - docker-compose exec -T app pm2 status
+
+# Here, the goal is to tag the "master" branch as "latest"
+release-latest:
+  variables:
+    # We are just playing with Docker here. 
+    # We do not need GitLab to clone the source code.
+    GIT_STRATEGY: none
+  stage: release
+  extends:
+  - .production_job
+  only:
+    # Only "master" should be tagged "latest"
+    refs:
+      - master
+  script:
+    # Because we have no guarantee that this job will be picked up by the same runner 
+    # that built the image in the previous step, we pull it again locally
+    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    # Then we tag it "latest"
+    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:latest
+    # Then we push it.
+    - docker push $CI_REGISTRY_IMAGE:latest
+
+release-tag:
+  variables:
+    # Again, we do not need the source code here. Just playing with Docker.
+    GIT_STRATEGY: none
+  stage: release
+  extends:
+  - .production_job
+  except:
+    # We want this job to be run on other branches except master.
+    refs:
+      - master
+  script:
+    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
+
+.deploy:
+  stage: deploy
+  variables:
+    # Again, we do not need the source code here. Just playing with Docker.
+    GIT_STRATEGY: none
+  extends:
+  - .production_job
+  before_script:
+    - apk update && apk add openssh-client bash
+    # run ssh-agent
+    - eval $(ssh-agent -s)
+    # add ssh key stored in SSH_PRIVATE_KEY variable to the agent store
+    - bash -c 'ssh-add <(echo "$SSH_PRIVATE_KEY")'
+    - mkdir -p ~/.ssh
+    - ssh-keyscan -H $SSH_SERVER_IP >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+  
+deploy-master:
+  extends: .deploy
+  only:
+    refs:
+      - master
+  script:
+    - >
+      ssh $SSH_USER@$SSH_SERVER_IP
+      "docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY};
+      cd ${PATH_TO_PROJECT};
+      docker-compose down;
+      docker pull ${CI_REGISTRY_IMAGE}:latest;
+      docker-compose up -d;
+      docker image prune -f;" # after pulling new image, the old one will be unused, so we need to remove it
+
+deploy-danny:
+  extends: .deploy
+  only:
+    refs:
+      - danny
+  script:
+    - >
+      ssh $SSH_USER@$SSH_SERVER_IP
+      "docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY};
+      cd ${PATH_TO_PROJECT_DANNY};
+      docker-compose down;
+      docker pull ${CI_REGISTRY_IMAGE}:danny;
+      docker-compose up -d;
+      docker image prune -f;" # after pulling new image, the old one will be unused, so we need to remove it
